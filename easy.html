@@ -117,7 +117,7 @@
 <body>
 
     <div class="game-container">
-        <h1>抽签惩罚游戏——一般难度</h1>
+        <h1>抽签惩罚游戏——简单难度</h1>
         <div class="score-board">
             当前分数:
             <span id="score">0</span>
@@ -139,7 +139,7 @@
         <ul id="history-list"></ul>
     </div>
     <div>
-        <a href="easy.html" class="difficulty-btn active" id="btn-easy">简单</a>
+        <a href="index.html" class="difficulty-btn active" id="btn-easy">一般</a>
         <a href="hard.html" class="difficulty-btn" id="btn-hard">困难</a>
 
     </div>
@@ -156,15 +156,15 @@ const initialDelay = 100;        // 动画初始帧的延迟（ms），越小越
 const finalDelay = 1200;         // 动画最终帧的延迟（ms），越大越慢
 
 const cards = [
-            { type: 'plus', value: 7, text: '藤条20下,分数 +7' },
-            { type: 'plus', value: 8, text: '戒尺30下,分数 +8' },
+            { type: 'plus', value: 8, text: '藤条20下,分数 +8' },
+            { type: 'plus', value: 8, text: '戒尺20下,分数 +8' },
             { type: 'plus', value: 10, text: '木板20下,分数 +10' },
-            { type: 'plus', value: 8, text: '戒尺30下,分数+8' },
-            { type: 'plus', value: 8, text: '藤条30下,分数+8 ' },
-            { type: 'plus', value: 8, text: '小红50下,分数+8' },
+            { type: 'plus', value: 8, text: '戒尺20下,分数+8' },
+            { type: 'plus', value: 10, text: '藤条20下,分数+10 ' },
+            { type: 'plus', value: 8, text: '小红20下,分数+8' },
             { type: 'plus', value: 9, text: '无事发生,分数+9' },
-            { type: 'plus', value: 9, text: '戒尺50下,分数+9' },
-            { type: 'plus', value: 12, text: '小红30下,分数+12' },
+            { type: 'plus', value: 9, text: '戒尺10下,分数+9' },
+            { type: 'plus', value: 12, text: '小红20下,分数+12' },
             { type: 'plus', value: 7, text: '木板30下,分数+7' },
             { type: 'plus', value: 6, text: '藤条20下,分数+6' },
             { type: 'plus', value: 8, text: '无事发生,分数+8' },
@@ -176,20 +176,18 @@ const cards = [
             
             // 减分卡
             { type: 'minus', value: 2, text: '无事发生,分数-2' },
-            { type: 'minus', value: 3, text: '小红30下,分数-3' },
-            { type: 'minus', value: 4, text: '无事发生,分数-4' },
-            { type: 'minus', value: 3, text: '戒尺20下,分数-3' },
-            { type: 'minus', value: 5, text: '巴掌30下,分数-5' },
+            { type: 'minus', value: 3, text: '小红10下,分数-3' },
+            { type: 'minus', value: 4, text: '无事发生,分数-2' },
+            { type: 'minus', value: 3, text: '戒尺10下,分数-3' },
+            { type: 'minus', value: 5, text: '巴掌10下,分数-2' },
             
             
             // 事件卡
-            { type: 'event', text: '小红30下' },
+            { type: 'event', text: '小红20下' },
             { type: 'event', text: '戒尺30下' },
             { type: 'event', text: '藤条20下' },
-            { type: 'event', text: '木板30下' },
+            { type: 'event', text: '木板20下' },
             { type: 'event', text: '小红30下' },
-            { type: 'clear', text: '运气太差,分数清0' },
-            { type: 'divided', text: '运气有点差,丢失一半分数' },
 
 ];
 
@@ -291,7 +289,6 @@ function finalizeDraw(card) {
     switch(card.type) {
         case 'plus':
             currentScore += card.value;
-            unlucky = unlucky + 0.5;
             break;
         case 'minus':
             if (unlucky >=1)currentScore -= card.value;
