@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽签惩罚游戏</title>
+    <style>
+        /* 基础样式 */
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            margin: 0;
+            color: #333;
+        }
+
+        /* 游戏主容器 */
+        .game-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        /* 分数显示 */
+        .score-board {
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+
+        #score {
+            font-size: 3em;
+            font-weight: bold;
+            color: #3498db;
+            display: block;
+            margin-top: 10px;
+        }
+        
+        /* 结果显示区域 */
+        .result-area {
+            min-height: 80px;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.1s ease; /* 动画时切换更快 */
+            border: 2px solid #ccc;
+        }
+        
+        /* 新增：抽签动画进行中的样式 */
+        .result-area.is-drawing {
+            border-style: dashed;
+            border-color: #3498db;
+        }
+
+        /* 卡片类型样式 */
+        .card-plus { background-color: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+        .card-minus { background-color: #ffebee; color: #c62828; border-color: #ef9a9a; }
+        .card-event { background-color: #e3f2fd; color: #1565c0; border-color: #90caf9; }
+        .card-win { background-color: #fffde7; color: #f57f17; border-color: #fdd835; }
+
+        /* 按钮样式 */
+        .button-container { margin-top: 30px; }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            color: white;
+            background-color: #3498db;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            margin: 5px;
+        }
+
+        button:hover:not(:disabled) { background-color: #2980b9; }
+        button:active:not(:disabled) { transform: scale(0.98); }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        #reset-button { background-color: #e74c3c; display: none; }
+        #reset-button:hover { background-color: #c0392b; }
+        
+        /* 历史记录样式 */
+        .history-container {
+            background-color: #ffffff;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+        }
+        .history-container h2 { text-align: center; color: #2c3e50; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        #history-list { list-style-type: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
+        #history-list li { padding: 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.9em; }
+        #history-list li.history-placeholder { text-align: center; color: #999; background: #fafafa; }
+        .history-plus { background-color: #e8f5e9; border-color: #c8e6c9; }
+        .history-minus { background-color: #ffebee; border-color: #ffcdd2; }
+        .history-event { background-color: #e3f2fd; border-color: #bbdefb; }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>抽签惩罚游戏</h1>
+        <div class="score-board">
+            当前分数:
+            <span id="score">0</span>
+        </div>
+
+        <div id="result-area" class="result-area">
+            点击“抽签”按钮开始游戏！
+        </div>
+        
+        <div class="button-container">
+            <button id="draw-button">抽 签</button>
+            <button id="reset-button">重新开始</button>
+        </div>
+        <p>厄运值:<span id="unluckylable">15</span>(厄运值为0时将不减分)</p>
+    </div>
+
+    <div class="history-container">
+        <h2>抽签历史</h2>
+        <ul id="history-list"></ul>
+    </div>
+
+    <!-- 引入 confetti.js 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    
+    <script>
+        // --- 游戏配置 ---
+const targetScore = 100;
+const animationDuration = 6000; // 动画总时长，可以适当加长一点
+const initialDelay = 100;        // 动画初始帧的延迟（ms），越小越快
+const finalDelay = 1200;         // 动画最终帧的延迟（ms），越大越慢
+
+const cards = [
+            { type: 'plus', value: 7, text: '藤条20下,分数 +7' },
+            { type: 'plus', value: 8, text: '戒尺40下,分数 +8' },
+            { type: 'plus', value: 10, text: '木板20下,分数 +10' },
+            { type: 'plus', value: 8, text: '戒尺40下,分数+8' },
+            { type: 'plus', value: 5, text: '藤条30下,分数+5 ' },
+            { type: 'plus', value: 8, text: '小红50下,分数+8' },
+            { type: 'plus', value: 9, text: '无事发生,分数+9' },
+            { type: 'plus', value: 9, text: '戒尺50下,分数+9' },
+            { type: 'plus', value: 12, text: '小红30下,分数+12' },
+            { type: 'plus', value: 7, text: '木板30下,分数+7' },
+            { type: 'plus', value: 6, text: '藤条20下,分数+6' },
+            { type: 'plus', value: 8, text: '无事发生,分数+8' },
+            { type: 'plus', value: 7, text: '无事发生,分数+7' },
+            { type: 'plus', value: 7, text: '无事发生,分数+7' },
+            { type: 'plus', value: 6, text: '无事发生,分数+6' },
+            
+            // 减分卡
+            { type: 'minus', value: 3, text: '戒尺30下,分数-3' },
+            { type: 'minus', value: 8, text: '藤条50下,分数-8' },
+            { type: 'minus', value: 3, text: '小红40下,分数-3' },
+            { type: 'minus', value: 4, text: '无事发生,分数-4' },
+            { type: 'minus', value: 3, text: '戒尺20下,分数-3' },
+            
+            // 事件卡
+            { type: 'event', text: '小红40下' },
+            { type: 'event', text: '戒尺30下' },
+            { type: 'event', text: '藤条20下' },
+            { type: 'event', text: '木板40下' },
+            { type: 'event', text: '小红30下' },
+            { type: 'event', text: '下一轮*3' },
+            { type: 'clear', text: '运气太差,分数清0' },
+            { type: 'divided', text: '运气有点差,丢失一半分数' },
+            { type: 'divided', text: '运气有点差,丢失一半分数' }
+
+];
+
+// --- DOM 元素获取 ---
+const scoreEl = document.getElementById('score');
+const resultAreaEl = document.getElementById('result-area');
+const drawButton = document.getElementById('draw-button');
+const resetButton = document.getElementById('reset-button');
+const historyListEl = document.getElementById('history-list');
+
+// --- 游戏状态变量 ---
+let currentScore = 0;
+let isAnimating = false;
+let historyLog = [];
+let unlucky = 15;
+
+// --- 游戏核心函数 ---
+
+function initGame() {
+    currentScore = 0;
+    isAnimating = false;
+    historyLog = [];
+    updateScoreDisplay();
+    updateHistoryDisplay();
+    resultAreaEl.textContent = '点击“抽签”按钮开始游戏！';
+    resultAreaEl.className = 'result-area';
+    drawButton.disabled = false;
+    drawButton.textContent = '抽 签';
+    resetButton.style.display = 'none';
+}
+
+function updateScoreDisplay() {
+    scoreEl.textContent = currentScore;
+}
+
+function updateHistoryDisplay() {
+    historyListEl.innerHTML = '';
+    if (historyLog.length === 0) {
+        historyListEl.innerHTML = '<li class="history-placeholder">暂无历史记录</li>';
+        return;
+    }
+    historyLog.forEach(entry => {
+        const li = document.createElement('li');
+        li.classList.add(`history-${entry.type}`);
+        li.innerHTML = `${entry.text} <strong>(当时分数: ${entry.scoreAfter})</strong>`;
+        historyListEl.appendChild(li);
+    });
+}
+
+function drawCard() {
+    if (isAnimating || currentScore >= targetScore) return;
+
+    isAnimating = true;
+    drawButton.disabled = true;
+    drawButton.textContent = '抽签中...';
+    resultAreaEl.classList.add('is-drawing');
+
+    const finalCard = cards[Math.floor(Math.random() * cards.length)];
+    
+    // 调用新的变速动画函数
+    runDeceleratingAnimation(finalCard);
+}
+
+// *** 新增：变速动画函数 ***
+function runDeceleratingAnimation(finalCard) {
+    const startTime = Date.now();
+
+    function nextFrame() {
+        const elapsedTime = Date.now() - startTime;
+
+        // 1. 如果时间到，则结束动画
+        if (elapsedTime >= animationDuration) {
+            finalizeDraw(finalCard);
+            return;
+        }
+
+        // 2. 显示一个随机的卡片作为动画帧
+        const randomCard = cards[Math.floor(Math.random() * cards.length)];
+        resultAreaEl.textContent = randomCard.text;
+        resultAreaEl.className = 'result-area is-drawing';
+        resultAreaEl.classList.add(`card-${randomCard.type}`);
+
+        // 3. 计算下一次的延迟时间
+        const progress = elapsedTime / animationDuration; // 动画进度 (0 到 1)
+        // 使用线性插值计算当前延迟，实现从快到慢的效果
+        const currentDelay = initialDelay + (progress * (finalDelay - initialDelay));
+        
+        // 4. 设置下一个动画帧
+        setTimeout(nextFrame, currentDelay);
+    }
+
+    // 启动第一帧
+    nextFrame();
+}
+
+// *** 新增：将动画结束后的逻辑封装成一个函数 ***
+function finalizeDraw(card) {
+    // 计算分数
+    switch(card.type) {
+        case 'plus':
+            currentScore += card.value;
+            unlucky = unlucky + 0.5;
+            break;
+        case 'minus':
+            if (unlucky >=1)currentScore -= card.value;
+            unlucky=unlucky- 1;
+            break;
+        case 'clear':
+            if (unlucky >= 10) currentScore = 0;
+            unlucky=unlucky- 10;
+            break;
+        case 'divided':
+            if (unlucky >=5)currentScore = currentScore/2;
+            unlucky=unlucky- 5;
+            break;
+    }
+    
+    // 更新显示
+    updateScoreDisplay();
+    resultAreaEl.textContent = card.text;
+    resultAreaEl.className = 'result-area';
+    resultAreaEl.classList.add(`card-${card.type}`);
+    document.getElementById("unluckylable").textContent = unlucky;
+
+    // 添加到历史记录
+    const historyEntry = { text: card.text, type: card.type, scoreAfter: currentScore };
+    historyLog.unshift(historyEntry);
+    updateHistoryDisplay();
+    
+    // 检查胜利条件
+    if (checkWinCondition()) {
+        triggerConfetti();
+    } else {
+        // 游戏未结束，恢复状态
+        isAnimating = false;
+        drawButton.disabled = false;
+        drawButton.textContent = '抽 签';
+    }
+}
+
+function checkWinCondition() {
+    if (currentScore >= targetScore) {
+        drawButton.disabled = true;
+        drawButton.textContent = '游戏结束';
+        resetButton.style.display = 'inline-block';
+        resultAreaEl.innerHTML = `🎉 恭喜！你达到了 ${currentScore} 分，赢得游戏！ 🎉`;
+        resultAreaEl.className = 'result-area card-win';
+        return true;
+    }
+    return false;
+}
+
+function triggerConfetti() {
+    if (typeof confetti === 'function') {
+        confetti({
+            particleCount: 150,
+            spread: 90,
+            origin: { y: 0.6 }
+        });
+    }
+}
+
+// --- 事件监听 ---
+drawButton.addEventListener('click', drawCard);
+resetButton.addEventListener('click', initGame);
+
+// --- 初始加载 ---
+initGame();
+    </script>
+</body>
+</html>
