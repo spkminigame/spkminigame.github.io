@@ -124,7 +124,7 @@
         </div>
 
         <div id="result-area" class="result-area">
-            点击“抽签”按钮开始游戏！
+            点击“抽签”按钮开始游戏！分数达到100为成功
         </div>
         
         <div class="button-container">
@@ -151,10 +151,10 @@ const finalDelay = 1200;         // 动画最终帧的延迟（ms），越大越
 
 const cards = [
             { type: 'plus', value: 7, text: '藤条20下,分数 +7' },
-            { type: 'plus', value: 8, text: '戒尺40下,分数 +8' },
+            { type: 'plus', value: 8, text: '戒尺30下,分数 +8' },
             { type: 'plus', value: 10, text: '木板20下,分数 +10' },
-            { type: 'plus', value: 8, text: '戒尺40下,分数+8' },
-            { type: 'plus', value: 5, text: '藤条30下,分数+5 ' },
+            { type: 'plus', value: 8, text: '戒尺30下,分数+8' },
+            { type: 'plus', value: 8, text: '藤条30下,分数+8 ' },
             { type: 'plus', value: 8, text: '小红50下,分数+8' },
             { type: 'plus', value: 9, text: '无事发生,分数+9' },
             { type: 'plus', value: 9, text: '戒尺50下,分数+9' },
@@ -162,27 +162,24 @@ const cards = [
             { type: 'plus', value: 7, text: '木板30下,分数+7' },
             { type: 'plus', value: 6, text: '藤条20下,分数+6' },
             { type: 'plus', value: 8, text: '无事发生,分数+8' },
-            { type: 'plus', value: 7, text: '无事发生,分数+7' },
+            { type: 'plus', value: 13, text: '无事发生,分数+13' },
             { type: 'plus', value: 7, text: '无事发生,分数+7' },
             { type: 'plus', value: 6, text: '无事发生,分数+6' },
             
             // 减分卡
-            { type: 'minus', value: 3, text: '戒尺30下,分数-3' },
-            { type: 'minus', value: 8, text: '藤条50下,分数-8' },
-            { type: 'minus', value: 3, text: '小红40下,分数-3' },
+            { type: 'minus', value: 2, text: '无事发生,分数-2' },
+            { type: 'minus', value: 3, text: '小红30下,分数-3' },
             { type: 'minus', value: 4, text: '无事发生,分数-4' },
             { type: 'minus', value: 3, text: '戒尺20下,分数-3' },
             
             // 事件卡
-            { type: 'event', text: '小红40下' },
+            { type: 'event', text: '小红30下' },
             { type: 'event', text: '戒尺30下' },
             { type: 'event', text: '藤条20下' },
-            { type: 'event', text: '木板40下' },
+            { type: 'event', text: '木板30下' },
             { type: 'event', text: '小红30下' },
-            { type: 'event', text: '下一轮*3' },
             { type: 'clear', text: '运气太差,分数清0' },
             { type: 'divided', text: '运气有点差,丢失一半分数' },
-            { type: 'divided', text: '运气有点差,丢失一半分数' }
 
 ];
 
@@ -207,7 +204,7 @@ function initGame() {
     historyLog = [];
     updateScoreDisplay();
     updateHistoryDisplay();
-    resultAreaEl.textContent = '点击“抽签”按钮开始游戏！';
+    resultAreaEl.textContent = '点击“抽签”按钮开始游戏！分数达到100为成功';
     resultAreaEl.className = 'result-area';
     drawButton.disabled = false;
     drawButton.textContent = '抽 签';
@@ -289,14 +286,17 @@ function finalizeDraw(card) {
         case 'minus':
             if (unlucky >=1)currentScore -= card.value;
             unlucky=unlucky- 1;
+            if (unlucky <=0)unlucky=0;
             break;
         case 'clear':
-            if (unlucky >= 10) currentScore = 0;
+            if (unlucky >= 5) currentScore = 0;
             unlucky=unlucky- 10;
+            if (unlucky <=0)unlucky=0;
             break;
         case 'divided':
             if (unlucky >=5)currentScore = currentScore/2;
             unlucky=unlucky- 5;
+            if (unlucky <=0)unlucky=0;
             break;
     }
     
